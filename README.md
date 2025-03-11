@@ -60,24 +60,25 @@ The services will be available at:
 
 If you prefer to run the application without Docker:
 
-1. Install dependencies:
+1. Prepare dependencies:
 
 ```bash
-yarn install
+nps prepare
 ```
 
 2. Start development servers:
 
 ```bash
-yarn dev
+nps dev
 ```
+
+Note: when you are using nps, please start DB separately
 
 ## Available Scripts
 
-- `yarn dev` - Start development servers
-- `yarn build` - Build all applications
-- `yarn test` - Run tests
-- `yarn lint` - Lint all files
+- `nps dev` - Start development servers
+- `nps build` - Build all applications
+- `nps test` - Run tests
 
 ## API Documentation
 
