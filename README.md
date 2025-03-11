@@ -4,12 +4,10 @@ A modern task management system built with NestJS, Next.js, and Prisma.
 
 ## Features
 
-- ✅ Task Creation and Management
+- ✅ Task Assignment
 - ✅ User Authentication & Authorization
-- ✅ Task Categories and Labels
+- ✅ Task Status
 - ✅ Priority Levels
-- ✅ Due Date Management
-- ✅ Task Search and Filtering
 - ✅ RESTful API
 - ✅ Responsive Design
 
