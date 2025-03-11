@@ -1,31 +1,46 @@
-FROM node:16-alpine AS builder
-RUN apk update
-# Set working directory
+FROM node:18-alpine
+
+# Install OpenSSL - required for Prisma client
+RUN apk add --no-cache openssl openssl-dev
+
+# Install SSL compatibility libraries
+RUN apk add --no-cache libc6-compat
+
+# Set up working directory
 WORKDIR /app
-RUN yarn global add turbo
+
+RUN yarn config set network-timeout 300000 && \
+    yarn config set registry https://registry.npmjs.org/
+
+# Copy package files
+COPY package.json yarn.lock ./
+COPY apps/api/package.json ./apps/api/
+COPY packages/config/package.json ./packages/config/
+COPY packages/tsconfig/package.json ./packages/tsconfig/
+
+RUN yarn install
+
 COPY . .
-RUN turbo prune --scope=api --docker
 
-# Add lockfile and package.json's of isolated subworkspace
-FROM node:16-alpine AS installer
-RUN apk update
-WORKDIR /app
-COPY --from=builder /app/out/json/ .
-COPY --from=builder /app/out/yarn.lock ./yarn.lock
-COPY --from=builder /app/turbo.json ./turbo.json
-COPY --from=builder /app/apps/api/prisma ./prisma
-RUN yarn install --frozen-lockfile
-RUN yarn prisma generate 
+# Generate Prisma client
+RUN yarn workspace api prisma generate
 
+# Build the application
+RUN yarn workspace api build
 
-FROM node:16-alpine AS sourcer
-WORKDIR /app
-COPY --from=installer /app/ .
-COPY --from=builder /app/out/full/ .
-COPY .gitignore .gitignore
-RUN yarn turbo run build --scope=api --include-dependencies --no-deps
+# Create an init.sh script that will run migrations and seed the database
+RUN echo '#!/bin/sh\n\
+echo "Running database migrations..."\n\
+yarn workspace api prisma migrate deploy\n\
+\n\
+echo "Seeding the database..."\n\
+yarn workspace api prisma db seed\n\
+\n\
+echo "Starting API server..."\n\
+yarn workspace api dev\
+' > /app/init.sh && chmod +x /app/init.sh
 
-FROM node:16-alpine as runner
-WORKDIR /app
-COPY --from=sourcer /app/ .
-CMD [ "node", "apps/api/dist/main.js" ]
+EXPOSE 5002
+
+# Start initialization script which runs migrations, seed, then starts the app
+CMD ["/bin/sh", "/app/init.sh"]

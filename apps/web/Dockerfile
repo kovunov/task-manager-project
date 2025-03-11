@@ -1,33 +1,25 @@
-FROM node:16-alpine AS builder
-RUN apk update
+FROM node:18-alpine AS base
+
 # Set working directory
 WORKDIR /app
-RUN yarn global add turbo
+
+# Set yarn to use a more reliable registry and increase network timeout
+RUN yarn config set network-timeout 300000 && \
+    yarn config set registry https://registry.npmjs.org/
+
+# Copy package files
+COPY package.json yarn.lock ./
+COPY apps/web/package.json ./apps/web/
+COPY packages/config/package.json ./packages/config/
+COPY packages/tsconfig/package.json ./packages/tsconfig/
+
+# Install dependencies with retry mechanism
+RUN yarn install || yarn install || yarn install
+
+# Copy source files
 COPY . .
-# Only Take packages that are needed to compile this app
-RUN turbo prune --scope=web --docker
 
-# Add lockfile and package.json's of isolated subworkspace
-FROM node:16-alpine AS installer
-RUN apk update
-RUN apk add --no-cache libc6-compat
-WORKDIR /app
-COPY --from=builder /app/out/json/ .
-COPY --from=builder /app/out/yarn.lock ./yarn.lock
-COPY --from=builder /app/turbo.json ./turbo.json
-RUN yarn install --frozen-lockfile
-
-
-FROM node:16-alpine AS sourcer
-RUN apk update
-WORKDIR /app
-COPY --from=installer /app/ .
-COPY --from=builder /app/out/full/ .
-COPY .gitignore .gitignore
-RUN yarn turbo run build --scope=web --include-dependencies --no-deps
-
-FROM node:16-alpine as runner
-WORKDIR /app
-COPY --from=sourcer /app/ .
-WORKDIR /app/apps/web/
-CMD [ "npm", "start" ]
+# Build the application
+RUN yarn workspace web build
+# Start the application
+CMD ["yarn", "workspace", "web", "dev"]

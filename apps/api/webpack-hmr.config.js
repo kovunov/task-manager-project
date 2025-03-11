@@ -9,7 +9,6 @@ module.exports = function (options, webpack) {
     externals: [
       nodeExternals({
         allowlist: ['webpack/hot/poll?100'],
-        modulesDir: '../../node_modules',
       }),
     ],
     plugins: [
@@ -18,7 +17,28 @@ module.exports = function (options, webpack) {
       new webpack.WatchIgnorePlugin({
         paths: [/\.js$/, /\.d\.ts$/],
       }),
-      new RunScriptWebpackPlugin({ name: options.output.filename }),
+      new webpack.IgnorePlugin({
+        checkResource(resource) {
+          const lazyImports = [
+            '@nestjs/microservices/microservices-module',
+            '@nestjs/websockets/socket-module',
+            'class-transformer/storage', // Ignore the outdated class-transformer/storage module
+          ];
+          if (!lazyImports.includes(resource)) {
+            return false;
+          }
+          try {
+            require.resolve(resource);
+          } catch (err) {
+            return true; // Ignore the module if it cannot be resolved
+          }
+          return false;
+        },
+      }),
+      new RunScriptWebpackPlugin({
+        name: options.output.filename,
+        autoRestart: false,
+      }),
     ],
   };
 };

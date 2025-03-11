@@ -1,84 +1,106 @@
-# Turborepo (NestJS + Prisma + NextJS + Tailwind + Typescript + Jest) Starter
+# Task Manager Application
 
-This is fullstack turborepo starter. It comes with the following features. 
+A modern task management system built with NestJS, Next.js, and Prisma.
 
-- ✅ Turborepo 
-- ✅ Nestjs 
-    - ✅ Env Config with Validation  
-    - ✅ Prisma 
-- ✅ NextJS 
-    - ✅ Tailwind 
-    - ✅ Redux Toolkit Query 
-- ✅ Testing using Jest 
-- ✅ Github Actions 
-- ✅ Reverse Proxy using Nginx 
-- ✅ Docker Integration 
-- ✅ Postgres Database 
-- ✅ Package scripts using NPS 
+## Features
 
-## What's inside?
+- ✅ Task Creation and Management
+- ✅ User Authentication & Authorization
+- ✅ Task Categories and Labels
+- ✅ Priority Levels
+- ✅ Due Date Management
+- ✅ Task Search and Filtering
+- ✅ RESTful API
+- ✅ Responsive Design
 
-This turborepo uses [Yarn](https://classic.yarnpkg.com/lang/en/) as a package manager. It includes the following packages/apps:
+## Tech Stack
 
-### Apps and Packages
+- **Frontend**: Next.js + TypeScript + Tailwind CSS + Redux Toolkit
+- **Backend**: NestJS + Prisma ORM
+- **Database**: PostgreSQL
+- **Infrastructure**: Docker & Docker Compose
 
-- `api`: a [NestJS](https://nestjs.com/) app
-- `web`: a [Next.js](https://nextjs.org) app
-- `ui`: a stub React component library used by `web`.
-- `config`: `eslint`, `nginx` and `tailwind` (includes `eslint-config-next` and `eslint-config-prettier`)
-- `tsconfig`: `tsconfig.json`s used throughout the monorepo
+## Quick Start with Docker
 
-Each package/app is 100% [TypeScript](https://www.typescriptlang.org/).
+### Prerequisites
 
-### Utilities
+- Docker and Docker Compose installed
+- Git (optional, for cloning)
 
-This turborepo has some additional tools already setup for you:
+### Installation
 
-- [Node Package Scripts](https://github.com/sezna/nps#readme) for automation scripts
-- [TypeScript](https://www.typescriptlang.org/) for static type checking
-- [ESLint](https://eslint.org/) for code linting
-- [Prettier](https://prettier.io) for code formatting
+1. Clone the repository (or download):
 
-## Setup
-This starter kit is using turborepo and yarn workspaces for monorepo workflow.
-
-### Prerequisites 
-- Install nps by running 
-```
-npm i -g nps
-```
-- Make sure docker and docker-compose are
- installed. Refer to docs for your operating system.
-
-### Configure Environment
-- Frontend 
-    - `cd apps/web && cp .env.example .env`
-- Backend 
-    - `cd apps/api && cp .env.example .env`
-
-### Install Dependencies
-Make sure you are at root of the project and just run 
-
-```
-nps prepare
-```
-### Build
-
-To build all apps and packages, run the following command at the root of project:
-
-```
-nps build
+```bash
+git clone <repository-url>
+cd task-manager-project
 ```
 
-### Develop
+2. Set up environment variables:
 
-To develop all apps and packages, run the following command at the root of project:
+```bash
+# Frontend environment
+cd apps/web && cp .env.example .env
+
+# Backend environment
+cd apps/api && cp .env.example .env
+```
+
+3. Start the application:
+
+```bash
+docker-compose up -d
+```
+
+The services will be available at:
+
+- Web Application: http://localhost:3000
+- API: http://localhost:3001
+- Prisma Studio: http://localhost:5555
+
+## Development Setup
+
+If you prefer to run the application without Docker:
+
+1. Install dependencies:
+
+```bash
+yarn install
+```
+
+2. Start development servers:
+
+```bash
+yarn dev
+```
+
+## Available Scripts
+
+- `yarn dev` - Start development servers
+- `yarn build` - Build all applications
+- `yarn test` - Run tests
+- `yarn lint` - Lint all files
+
+## API Documentation
+
+The API documentation is available at http://localhost:3001/api when the server is running.
+
+## Project Structure
 
 ```
-nps dev
+task-manager-project/
+├── apps/
+│   ├── api/         # NestJS backend
+│   └── web/         # Next.js frontend
+├── packages/
+│   └── config/      # Shared configurations
+└── docker-compose.yml
 ```
-The app should be running at `http://localhost` with reverse proxy configured.
 
+## Contributing
 
-## Other available commands
-Run `nps` in the terminal to see list of all available commands. 
+1. Fork the repository
+2. Create your feature branch
+3. Commit your changes
+4. Push to the branch
+5. Create a new Pull Request

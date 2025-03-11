@@ -1,7 +1,7 @@
-import { Logger } from '@nestjs/common';
+import { Logger, ValidationPipe } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
+import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { AppModule } from './app.module';
-import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 
 declare const module: any;
 async function bootstrap() {
@@ -9,16 +9,20 @@ async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 
   const config = new DocumentBuilder()
-    .setTitle('Leaves Tracker')
-    .setDescription('Api Docs for leaves tracker')
+    .setTitle('Task Manager API')
+    .setDescription('Task Manager API description')
     .setVersion('1.0')
+    .addBearerAuth()
     .build();
 
   const document = SwaggerModule.createDocument(app, config);
-  SwaggerModule.setup('docs', app, document);
+  SwaggerModule.setup('api', app, document);
 
-  const PORT = 5002;
+  const PORT = process.env.PORT || 5002;
 
+  app.useGlobalPipes(new ValidationPipe({ transform: true }));
+  app.enableCors();
+  app.setGlobalPrefix('api');
   await app.listen(PORT);
 
   if (module.hot) {

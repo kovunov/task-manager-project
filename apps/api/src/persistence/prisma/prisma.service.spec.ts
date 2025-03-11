@@ -10,9 +10,22 @@ describe('PrismaService', () => {
     }).compile();
 
     service = module.get<PrismaService>(PrismaService);
+
+    // Mock connect and disconnect methods
+    jest.spyOn(service, '$connect').mockImplementation(() => Promise.resolve());
+    jest
+      .spyOn(service, '$disconnect')
+      .mockImplementation(() => Promise.resolve());
   });
 
   it('should be defined', () => {
     expect(service).toBeDefined();
+  });
+
+  describe('onModuleInit', () => {
+    it('should connect to the database', async () => {
+      await service.onModuleInit();
+      expect(service.$connect).toHaveBeenCalled();
+    });
   });
 });
