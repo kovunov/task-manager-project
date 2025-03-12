@@ -1,21 +1,28 @@
 import { useState } from "react";
+import { useAppSelector } from "../../store";
 import {
   useAssignTaskToMeMutation,
+  useCreateTaskMutation,
   useDeleteTaskMutation,
   useGetMyTasksQuery,
   useGetUnassignedTasksQuery,
+  useUnassignTaskFromMeMutation,
   useUpdateTaskStatusMutation,
 } from "../../store/services/api";
-import { TaskList } from "./TaskList";
 import Spinner from "../common/Spinner";
+import { TaskFormModal } from "./TaskFormModal";
+import { TaskList } from "./TaskList";
 
 export const TaskDashboardContent = () => {
   const [activeTab, setActiveTab] = useState<"my-tasks" | "unassigned">(
     "my-tasks"
   );
   const [processingTaskIds, setProcessingTaskIds] = useState<number[]>([]);
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
-  // Load data for both tabs - with skip option to better control data fetching
+  const currentUser = useAppSelector((state) => state.auth.user);
+  const isAdmin = currentUser?.username === "admin";
+
   const {
     data: myTasks = [],
     isLoading: isMyTasksLoading,
@@ -42,6 +49,9 @@ export const TaskDashboardContent = () => {
   const [deleteTask, { isLoading: isDeleting }] = useDeleteTaskMutation();
   const [updateTaskStatus, { isLoading: isUpdatingStatus }] =
     useUpdateTaskStatusMutation();
+  const [createTask, { isLoading: isCreating }] = useCreateTaskMutation();
+  const [unassignTask, { isLoading: isUnassigning }] =
+    useUnassignTaskFromMeMutation();
 
   const isLoading =
     (activeTab === "my-tasks" && isMyTasksLoading) ||
@@ -53,6 +63,17 @@ export const TaskDashboardContent = () => {
       await assignTask(taskId).unwrap();
     } catch (error) {
       console.error("Failed to assign task:", error);
+    } finally {
+      setProcessingTaskIds((prev) => prev.filter((id) => id !== taskId));
+    }
+  };
+
+  const handleUnassignTask = async (taskId: number) => {
+    try {
+      setProcessingTaskIds((prev) => [...prev, taskId]);
+      await unassignTask(taskId).unwrap();
+    } catch (error) {
+      console.error("Failed to unassign task:", error);
     } finally {
       setProcessingTaskIds((prev) => prev.filter((id) => id !== taskId));
     }
@@ -86,41 +107,73 @@ export const TaskDashboardContent = () => {
     }
   };
 
-  // Check if a specific task is being processed
-  const isTaskProcessing = (taskId: number) =>
-    processingTaskIds.includes(taskId);
+  const handleCreateTask = async (taskData: {
+    title: string;
+    description: string;
+    priority: string;
+  }) => {
+    try {
+      await createTask({
+        title: taskData.title,
+        description: taskData.description,
+        priority: taskData.priority,
+        status: "pending",
+      }).unwrap();
+      setIsModalOpen(false);
+    } catch (error) {
+      console.error("Failed to create task:", error);
+    }
+  };
 
-  if (isLoading) {
-    return (
-      <>
-        <div className="flex justify-center items-center h-64">
-          <Spinner />
-        </div>
-      </>
-    );
-  }
+  // Helper function to check if a task is currently being processed
+  const isTaskProcessing = (taskId: number) => {
+    return processingTaskIds.includes(taskId);
+  };
 
   return (
     <>
-      <div className="mb-4 border-b border-gray-200">
-        <nav className="-mb-px flex">
+      <div className="mb-8 flex justify-between items-center">
+        <h1 className="text-2xl font-bold">Task Dashboard</h1>
+        <button
+          onClick={() => setIsModalOpen(true)}
+          className="bg-indigo-600 text-white px-4 py-2 rounded-md hover:bg-indigo-700"
+        >
+          Create New Task
+        </button>
+      </div>
+
+      <TaskFormModal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        onSubmit={handleCreateTask}
+        isSubmitting={isCreating}
+      />
+
+      {isLoading && (
+        <div className="flex justify-center my-8">
+          <Spinner />
+        </div>
+      )}
+
+      <div className="mb-6 border-b border-gray-200">
+        <nav className="flex space-x-8">
           <button
-            className={`mr-8 py-4 px-1 border-b-2 font-medium text-sm ${
+            onClick={() => setActiveTab("my-tasks")}
+            className={`py-4 px-1 border-b-2 font-medium text-sm ${
               activeTab === "my-tasks"
                 ? "border-indigo-500 text-indigo-600"
                 : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
             }`}
-            onClick={() => setActiveTab("my-tasks")}
           >
             My Tasks
           </button>
           <button
+            onClick={() => setActiveTab("unassigned")}
             className={`py-4 px-1 border-b-2 font-medium text-sm ${
               activeTab === "unassigned"
                 ? "border-indigo-500 text-indigo-600"
                 : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
             }`}
-            onClick={() => setActiveTab("unassigned")}
           >
             Unassigned Tasks
           </button>
@@ -134,8 +187,10 @@ export const TaskDashboardContent = () => {
           isError={isMyTasksError}
           emptyMessage="You don't have any tasks assigned to you."
           onStatusChange={handleStatusChange}
+          onUnassignTask={handleUnassignTask}
           isTaskProcessing={isTaskProcessing}
           isUpdatingStatus={isUpdatingStatus}
+          isUnassigning={isUnassigning}
         />
       ) : (
         <TaskList
@@ -144,7 +199,7 @@ export const TaskDashboardContent = () => {
           isError={isUnassignedError}
           emptyMessage="There are no unassigned tasks."
           onAssignTask={handleAssignTask}
-          onDeleteTask={handleDeleteTask}
+          onDeleteTask={isAdmin ? handleDeleteTask : undefined}
           isTaskProcessing={isTaskProcessing}
           isAssigning={isAssigning}
           isDeleting={isDeleting}

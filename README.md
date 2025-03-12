@@ -23,6 +23,8 @@ A modern task management system built with NestJS, Next.js, and Prisma.
 ### Prerequisites
 
 - Docker and Docker Compose installed
+- Node 22.x or higher
+- Yarn and NPS (Node Package Scripts) installed globally
 - Git (optional, for cloning)
 
 ### Installation
@@ -34,27 +36,21 @@ git clone <repository-url>
 cd task-manager-project
 ```
 
-2. Set up environment variables:
+2. Start the application:
 
 ```bash
-# Frontend environment
-cd apps/web && cp .env.example .env
-
-# Backend environment
-cd apps/api && cp .env.example .env
+docker-compose up
 ```
 
-3. Start the application:
-
-```bash
-docker-compose up -d
-```
+It will start all three services: DB, API, and Web.
+Default user created is `admin@example.com` with password `admin123`.
+Some initial tasks will be pre-generated.
 
 The services will be available at:
 
 - Web Application: http://localhost:3000
-- API: http://localhost:3001
-- Prisma Studio: http://localhost:5555
+- API: http://localhost:5002
+- Database: http://localhost:5432
 
 ## Development Setup
 
@@ -66,18 +62,23 @@ If you prefer to run the application without Docker:
 nps prepare
 ```
 
-2. Start development servers:
+2. Start PostgreSQL:
+
+```bash
+docker-compose up -d db
+```
+
+3. Update environment DATABASE_URL variable in API `.env` file to be correct, refer Postgres Image in `docker-compose.yml` file:
+
+4. Start development servers:
 
 ```bash
 nps dev
 ```
 
-Note: when you are using nps, please start DB separately
-
 ## Available Scripts
 
 - `nps dev` - Start development servers
-- `nps build` - Build all applications
 - `nps test` - Run tests
 
 ## API Documentation

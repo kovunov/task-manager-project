@@ -1,97 +1,45 @@
 services:
-  reverse-proxy:
-    image: nginx:latest
-    container_name: nginx_container
-    ports:
-      - 80:80
-    depends_on:
-      - postgres
-      - api
-      - web
-    volumes:
-      - ./packages/config/nginx.conf:/etc/nginx/nginx.conf
-    extra_hosts:
-      - "host.docker.internal:host-gateway"
-
   postgres:
-    image: postgres:15
+    image: postgres:14
     environment:
-      - POSTGRES_DB=task_manager
-      - POSTGRES_USER=admin
-      - POSTGRES_PASSWORD=db!Connect1
-      - PGUSER=admin
-      - POSTGRES_HOST_AUTH_METHOD=trust
-    command:
-      - "postgres"
-      - "-c"
-      - "listen_addresses=*"
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: taskmanager
     volumes:
-      - db_data:/var/lib/postgresql/data
-      - ./packages/config/init-db.sh:/docker-entrypoint-initdb.d/init-db.sh
+      - postgres-data:/var/lib/postgresql/data
     ports:
       - "5432:5432"
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U admin"]
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
       interval: 5s
       timeout: 5s
       retries: 5
-      start_period: 10s
 
   api:
     build:
       context: .
-      dockerfile: ./apps/api/Dockerfile
-      args:
-        - SKIP_YARN_CACHE=true
-        - NPM_CONFIG_REGISTRY=https://registry.npmjs.org/
-        - YARN_NETWORK_TIMEOUT=300000
-    container_name: api_container
-    ports:
-      - "5002:5002"
-    environment:
-      - DATABASE_URL=postgresql://admin:db!Connect1@postgres:5432/task_manager?schema=public
-      - NODE_ENV=development
-      - NPM_CONFIG_REGISTRY=https://registry.npmjs.org/
-      - YARN_NETWORK_TIMEOUT=300000
+      dockerfile: apps/api/Dockerfile
     depends_on:
       postgres:
         condition: service_healthy
-    volumes:
-      - ./apps/api:/app/apps/api
-      - ./packages/ui:/app/packages/ui
-      - /app/apps/api/node_modules
-    extra_hosts:
-      - "host.docker.internal:host-gateway"
-    restart: on-failure
-    dns:
-      - 8.8.8.8
-      - 8.8.4.4
-
+    environment:
+      DATABASE_URL: postgresql://postgres:postgres@postgres:5432/taskmanager
+    ports:
+      - "5002:5002"
+    command: >
+      sh -c "
+        echo 'Waiting for database to be ready...' &&
+        yarn workspace api prisma migrate deploy &&
+        yarn workspace api prisma db seed &&
+        yarn workspace api start:prod
+      "
   web:
     build:
       context: .
-      dockerfile: ./apps/web/Dockerfile
-      args:
-        - SKIP_YARN_CACHE=true
-        - NPM_CONFIG_REGISTRY=https://registry.npmjs.org/
-        - YARN_NETWORK_TIMEOUT=300000
-    container_name: web_container
+      dockerfile: apps/web/Dockerfile
     ports:
       - "3000:3000"
-    environment:
-      - NODE_ENV=development
-      - NPM_CONFIG_REGISTRY=https://registry.npmjs.org/
-      - YARN_NETWORK_TIMEOUT=300000
-    volumes:
-      - ./apps/web:/app/apps/web
-      - ./packages/ui:/app/packages/ui
-      - /app/apps/web/node_modules
-    extra_hosts:
-      - "host.docker.internal:host-gateway"
-    restart: on-failure
-    dns:
-      - 8.8.8.8
-      - 8.8.4.4
+    command: yarn workspace web start
 
 volumes:
-  db_data:
+  postgres-data:

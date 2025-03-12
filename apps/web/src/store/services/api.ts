@@ -35,14 +35,21 @@ export interface LoginResponse {
   user: {
     id: number;
     email: string;
-    name?: string;
+    username?: string;
   };
+}
+
+export interface CreateTaskRequest {
+  title: string;
+  description: string;
+  priority: string;
+  status: string;
 }
 
 export const api = createApi({
   reducerPath: "baseApi",
   baseQuery: fetchBaseQuery({
-    baseUrl: "http://localhost:5002/api", // Updated to point to NestJS server with /api prefix
+    baseUrl: "http://localhost:5002/api",
     prepareHeaders: (headers, { getState }: any) => {
       // Get token from state
       const token = getState()?.auth?.token;
@@ -55,11 +62,6 @@ export const api = createApi({
   }),
   tagTypes: ["Tasks", "Auth"],
   endpoints: (builder) => ({
-    hello: builder.query<{ message: string }, void>({
-      query: () => ({
-        url: "/",
-      }),
-    }),
     login: builder.mutation<LoginResponse, LoginRequest>({
       query: (credentials) => ({
         url: "/auth/login",
@@ -136,11 +138,26 @@ export const api = createApi({
         }
       },
     }),
+    createTask: builder.mutation<Task, CreateTaskRequest>({
+      query: (taskData) => ({
+        url: "/tasks",
+        method: "POST",
+        body: taskData,
+      }),
+      invalidatesTags: ["Tasks"],
+    }),
+
+    unassignTaskFromMe: builder.mutation<Task, number>({
+      query: (taskId: number) => ({
+        url: `/tasks/${taskId}/unassign`,
+        method: "POST",
+      }),
+      invalidatesTags: ["Tasks"],
+    }),
   }),
 });
 
 export const {
-  useHelloQuery,
   useLoginMutation,
   useGetAllTasksQuery,
   useGetMyTasksQuery,
@@ -148,4 +165,6 @@ export const {
   useAssignTaskToMeMutation,
   useDeleteTaskMutation,
   useUpdateTaskStatusMutation,
+  useCreateTaskMutation,
+  useUnassignTaskFromMeMutation,
 } = api;

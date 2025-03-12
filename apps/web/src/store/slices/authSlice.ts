@@ -5,7 +5,7 @@ export interface AuthState {
   user: {
     id?: number;
     email?: string;
-    name?: string;
+    username?: string;
   } | null;
   token: string | null;
   isAuthenticated: boolean;

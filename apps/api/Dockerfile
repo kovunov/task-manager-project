@@ -1,46 +1,40 @@
-FROM node:18-alpine
+FROM node:22-alpine
 
-# Install OpenSSL - required for Prisma client
-RUN apk add --no-cache openssl openssl-dev
+# Install dependencies in a single layer
+RUN apk add --no-cache \
+    openssl \
+    openssl-dev \
+    libc6-compat \
+    netcat-openbsd
 
-# Install SSL compatibility libraries
-RUN apk add --no-cache libc6-compat
-
-# Set up working directory
+# Set working directory
 WORKDIR /app
 
-RUN yarn config set network-timeout 300000 && \
-    yarn config set registry https://registry.npmjs.org/
-
-# Copy package files
+# Copy package files for caching
 COPY package.json yarn.lock ./
 COPY apps/api/package.json ./apps/api/
 COPY packages/config/package.json ./packages/config/
 COPY packages/tsconfig/package.json ./packages/tsconfig/
 
+# Install dependencies
 RUN yarn install
 
+# Copy the rest of the app
 COPY . .
 
-# Generate Prisma client
-RUN yarn workspace api prisma generate
+# Generate Prisma client and build the app
+RUN yarn workspace api prisma generate && \
+    yarn workspace api build
 
-# Build the application
-RUN yarn workspace api build
+# Set environment variable to indicate Docker environment
+ENV DOCKER_ENV=true
 
-# Create an init.sh script that will run migrations and seed the database
-RUN echo '#!/bin/sh\n\
-echo "Running database migrations..."\n\
-yarn workspace api prisma migrate deploy\n\
-\n\
-echo "Seeding the database..."\n\
-yarn workspace api prisma db seed\n\
-\n\
-echo "Starting API server..."\n\
-yarn workspace api dev\
-' > /app/init.sh && chmod +x /app/init.sh
+# Copy startup scripts
+COPY apps/api/scripts/*.sh /app/
+RUN chmod +x /app/*.sh
 
+# Expose port
 EXPOSE 5002
 
-# Start initialization script which runs migrations, seed, then starts the app
-CMD ["/bin/sh", "/app/init.sh"]
+# Use a simple command as the entry point
+CMD ["/bin/sh", "/app/start.sh"]

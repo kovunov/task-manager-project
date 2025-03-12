@@ -12,6 +12,7 @@
     "test:ci": "jest --ci"
   },
   "dependencies": {
+    "@headlessui/react": "^2.2.0",
     "@reduxjs/toolkit": "^1.9.5",
     "next": "13.4.12",
     "react": "18.2.0",

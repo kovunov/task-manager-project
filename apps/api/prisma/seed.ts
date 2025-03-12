@@ -1,4 +1,5 @@
 import { PrismaClient } from '@prisma/client';
+import { hashSync } from 'bcryptjs';
 const prisma = new PrismaClient();
 
 async function seed() {
@@ -10,8 +11,7 @@ async function seed() {
     create: {
       username: 'admin',
       email: 'admin@example.com',
-      password_hash:
-        '$2a$10$XUHmWgwp5F3WAzuoYKLs9.BwoGIJ/VM4.PJ1tkTmKBKHxzGbOjA2C' /* password: admin123 */,
+      password_hash: hashSync('admin123', 10),
       first_name: 'Admin',
       last_name: 'User',
     },
@@ -23,8 +23,7 @@ async function seed() {
     create: {
       username: 'user1',
       email: 'user1@example.com',
-      password_hash:
-        '$2a$10$gxGU8D.tRqzrPTVslbmL2uJdZNXRSA9VpvUaHgsN.TmXbq2SQvOzi' /* password: password123 */,
+      password_hash: hashSync('password123', 10),
       first_name: 'Test',
       last_name: 'User',
     },
@@ -34,6 +33,28 @@ async function seed() {
   // Create 20 sample tasks
   const priorities = ['high', 'medium', 'low'];
   const statuses = ['pending', 'in_progress', 'completed'];
+  const softwareTaskNames = [
+    'Fix login authentication bug',
+    'Implement RESTful API endpoint',
+    'Refactor database queries',
+    'Create unit tests for user service',
+    'Update npm dependencies',
+    'Optimize image loading performance',
+    'Add form validation',
+    'Configure CI/CD pipeline',
+    'Design database schema',
+    'Debug memory leak issue',
+    'Implement responsive design',
+    'Create user documentation',
+    'Add error handling middleware',
+    'Migrate to TypeScript',
+    'Setup Docker environment',
+    'Implement caching layer',
+    'Code review PR #123',
+    'Fix cross-browser compatibility issues',
+    'Improve API response times',
+    'Update security configurations',
+  ];
 
   for (let i = 1; i <= 20; i++) {
     const priority = priorities[Math.floor(Math.random() * priorities.length)];
@@ -42,11 +63,12 @@ async function seed() {
       Date.now() + Math.floor(Math.random() * 30) * 24 * 60 * 60 * 1000,
     );
 
-    // Create the task
     const task = await prisma.tasks.create({
       data: {
-        title: `Sample Task ${i}`,
-        description: `This is a description for sample task ${i}`,
+        title: softwareTaskNames[i % softwareTaskNames.length],
+        description: `This is a description for ${
+          softwareTaskNames[i % softwareTaskNames.length]
+        }`,
         priority,
         status,
         due_date: dueDate,

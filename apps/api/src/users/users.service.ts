@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import * as bcrypt from 'bcryptjs';
+import { compare, hash } from 'bcryptjs';
 import { PrismaService } from '../persistence/prisma/prisma.service';
 
 @Injectable()
@@ -25,7 +25,7 @@ export class UsersService {
     firstName?: string,
     lastName?: string,
   ) {
-    const hashedPassword = await bcrypt.hash(password, 10);
+    const hashedPassword = await hash(password, 10);
 
     return this.prisma.users.create({
       data: {
@@ -42,6 +42,6 @@ export class UsersService {
     plainPassword: string,
     hashedPassword: string,
   ): Promise<boolean> {
-    return bcrypt.compare(plainPassword, hashedPassword);
+    return compare(plainPassword, hashedPassword);
   }
 }

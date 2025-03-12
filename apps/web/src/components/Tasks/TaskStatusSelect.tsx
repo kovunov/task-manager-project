@@ -13,10 +13,8 @@ export const TaskStatusSelect: React.FC<TaskStatusSelectProps> = ({
   disabled = false,
   loading = false,
 }) => {
-  // Track the displayed status locally to provide immediate feedback
   const [displayedStatus, setDisplayedStatus] = useState(currentStatus);
 
-  // Update displayed status when the prop changes (e.g. after API response)
   useEffect(() => {
     setDisplayedStatus(currentStatus);
   }, [currentStatus]);
@@ -29,8 +27,8 @@ export const TaskStatusSelect: React.FC<TaskStatusSelectProps> = ({
 
   const handleChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const newStatus = e.target.value;
-    setDisplayedStatus(newStatus); // Update local state for immediate feedback
-    onChange(newStatus); // Trigger the parent's onChange handler
+    setDisplayedStatus(newStatus);
+    onChange(newStatus);
   };
 
   return (
